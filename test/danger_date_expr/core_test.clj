@@ -46,66 +46,76 @@
           (is (= et (->epoch-time (->epoch-time et))))
           (is (= ts (->seconds-since-epoch (->epoch-time et)))))))))
 
-;; # Implementations of core protocols
+;; # Implementations of core protocol
 
-(deftest date-expr-part-test
-  (testing "We can format a DateExprPart"
-    (let [part (make-date-expr-part "yodaetl/" "yyyy/MM/dd" "/path/to/logfile")]
-      (is (= (format-part part ts)
-             "yodaetl/2014/08/13/path/to/logfile")))))
+(def date-expr (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/stg/route-66/%H.%M/file-A"))
 
-(def parts
-  (vector (make-date-expr-part "s3://okl-danger-stg/humperdink/" "yyyy/MM/dd" "/stg")
-          (make-date-expr-part "/route-66/" "HH.mm" "/file-A")))
-(def date-expr (make-date-expr parts))
-
-(deftest date-expr-test
+(deftest format-test
   (testing "We can format a DateExpr"
     (is (= (format-expr date-expr ts)
-           "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.10/file-A"))))
+           "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.10/file-A"))
+    (testing "even if it starts with a date"
+      (is (= (format-expr (make-date-expr "%Y/%m/foo/bar") ts)
+             "2014/08/foo/bar")))
+    (testing "with a meridian specified!"
+      (is (= (format-expr (make-date-expr "s3://bucket/ponies/%Y/%m/%d/%p/foo/%H.%M.%S/bar") ts)
+             "s3://bucket/ponies/2014/08/13/PM/foo/17.10.42/bar")))))
+
+(deftest parse-test
+  (let [f (format-expr date-expr ts)]
+    (testing "We can parse a formatted DateExpr"
+      (is (= (parse-expr date-expr f)
+             ;; note the loss of the "42 seconds" from ts, because date-expr
+             ;; only has minute precision!
+             1407949800))
+      (is (= (format-expr date-expr (parse-expr date-expr f))
+             f)))))
 
 ;; # formatted-date-range
 
 (deftest formatted-date-range-test
   (testing "Testing the basic range-functions"
     (let [jdt (->joda-date-time ts)]
-      (is (= (year-range (t/minus jdt (t/years 2)) jdt date-expr)
+      (is (= (formatted-date-range (t/minus jdt (t/years 2)) jdt
+                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y"))
              (list
-              "s3://okl-danger-stg/humperdink/2012/08/13/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2013/08/13/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.10/file-A")))
-      (is (= (month-range (t/minus jdt (t/months 4)) jdt date-expr)
+              "s3://okl-danger-stg/humperdink/2012"
+              "s3://okl-danger-stg/humperdink/2013"
+              "s3://okl-danger-stg/humperdink/2014")))
+      (is (= (formatted-date-range (t/minus jdt (t/months 4)) jdt
+                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m"))
              (list
-              "s3://okl-danger-stg/humperdink/2014/04/13/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/05/13/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/06/13/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/07/13/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.10/file-A")))
-      (is (= (week-range (t/minus jdt (t/months 1)) jdt date-expr)
+              "s3://okl-danger-stg/humperdink/2014/04"
+              "s3://okl-danger-stg/humperdink/2014/05"
+              "s3://okl-danger-stg/humperdink/2014/06"
+              "s3://okl-danger-stg/humperdink/2014/07"
+              "s3://okl-danger-stg/humperdink/2014/08")))
+      (is (= (formatted-date-range (t/minus jdt (t/weeks 1)) jdt
+                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/"))
              (list
-              "s3://okl-danger-stg/humperdink/2014/07/13/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/07/20/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/07/27/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/03/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/10/stg/route-66/17.10/file-A")))
-      (is (= (day-range (t/minus jdt (t/weeks 1)) jdt date-expr)
+              "s3://okl-danger-stg/humperdink/2014/08/06/"
+              "s3://okl-danger-stg/humperdink/2014/08/07/"
+              "s3://okl-danger-stg/humperdink/2014/08/08/"
+              "s3://okl-danger-stg/humperdink/2014/08/09/"
+              "s3://okl-danger-stg/humperdink/2014/08/10/"
+              "s3://okl-danger-stg/humperdink/2014/08/11/"
+              "s3://okl-danger-stg/humperdink/2014/08/12/"
+              "s3://okl-danger-stg/humperdink/2014/08/13/")))
+      (is (= (formatted-date-range (t/minus jdt (t/hours 13)) jdt
+                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/%p"))
              (list
-              "s3://okl-danger-stg/humperdink/2014/08/06/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/07/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/08/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/09/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/10/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/11/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/12/stg/route-66/17.10/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.10/file-A")))
-      (is (= (hour-range (t/minus (t/minus jdt (t/hours 3)) (t/minutes 40))
-                         jdt date-expr)
+              "s3://okl-danger-stg/humperdink/2014/08/13/AM"
+              "s3://okl-danger-stg/humperdink/2014/08/13/PM")))
+      (is (= (formatted-date-range (t/minus (t/minus jdt (t/hours 3)) (t/minutes 40))
+                                   jdt
+                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/stg/route-66/%H"))
              (list
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/13.30/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/14.30/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/15.30/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/16.30/file-A")))
-      (is (= (minute-range (t/minus jdt (t/minutes 5)) jdt date-expr)
+              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/13"
+              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/14"
+              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/15"
+              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/16")))
+      (is (= (formatted-date-range (t/minus jdt (t/minutes 5)) jdt
+                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/stg/route-66/%H.%M/file-A"))
              (list
               "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.05/file-A"
               "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.06/file-A"
@@ -116,43 +126,44 @@
   (testing "They accept args in all the combinations of types"
     (let [jdt (->joda-date-time ts)
           the-result (list
-                      "s3://okl-danger-stg/humperdink/2014/08/12/stg/route-66/17.10/file-A"
-                      "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.10/file-A")]
-      (is (= (day-range (t/minus jdt (t/days 1))
+                      "s3://okl-danger-stg/humperdink/2014/08/12/stg/route-66"
+                      "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66")
+          date-expr (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/stg/route-66")]
+      (is (= (formatted-date-range (t/minus jdt (t/days 1))
                         jdt
                         date-expr)
              the-result))
-      (is (= (day-range (t/minus jdt (t/days 1))
+      (is (= (formatted-date-range (t/minus jdt (t/days 1))
                         (->epoch-time jdt)
                         date-expr)
              the-result))
-      (is (= (day-range (t/minus jdt (t/days 1))
+      (is (= (formatted-date-range (t/minus jdt (t/days 1))
                         (->seconds-since-epoch jdt)
                         date-expr)
              the-result))
 
-      (is (= (day-range (->epoch-time (t/minus jdt (t/days 1)))
+      (is (= (formatted-date-range (->epoch-time (t/minus jdt (t/days 1)))
                         jdt
                         date-expr)
              the-result))
-      (is (= (day-range (->epoch-time (t/minus jdt (t/days 1)))
+      (is (= (formatted-date-range (->epoch-time (t/minus jdt (t/days 1)))
                         (->epoch-time jdt)
                         date-expr)
              the-result))
-      (is (= (day-range (->epoch-time (t/minus jdt (t/days 1)))
+      (is (= (formatted-date-range (->epoch-time (t/minus jdt (t/days 1)))
                         (->seconds-since-epoch jdt)
                         date-expr)
              the-result))
 
-      (is (= (day-range (->seconds-since-epoch (t/minus jdt (t/days 1)))
+      (is (= (formatted-date-range (->seconds-since-epoch (t/minus jdt (t/days 1)))
                         jdt
                         date-expr)
              the-result))
-      (is (= (day-range (->seconds-since-epoch (t/minus jdt (t/days 1)))
+      (is (= (formatted-date-range (->seconds-since-epoch (t/minus jdt (t/days 1)))
                         (->epoch-time jdt)
                         date-expr)
              the-result))
-      (is (= (day-range (->seconds-since-epoch (t/minus jdt (t/days 1)))
+      (is (= (formatted-date-range (->seconds-since-epoch (t/minus jdt (t/days 1)))
                         (->seconds-since-epoch jdt)
                         date-expr)
              the-result)))))
