@@ -1,10 +1,46 @@
 # danger-date-expr
 
-A Clojure library designed to ... well, that part is up to you.
+A Clojure library for working with date-expressions.
+
+Functionality provided:
+
+ * Given a date-expression and a timestamp, compute the formatted
+   date-expr string
+ * Given a date-expression and a formatted date-expr string, compute
+   the timestamp that the date-expression represents
+ * Given a date-expression, a start time, and a stop time, compute all
+   the formatted date-expr strings in between start and stop time
+   (spaced apart by the finest granularity of time-period in the date
+   expression)
+
+Notes:
+
+ * Precisions are down to the nearest second.
+ * Formats are in UTC.
+ * Accepted timestamp formats are:
+    (1) java.lang.Long, representing seconds since the Unix epoch
+    (2) EpochTime, defined inside this library
+    (3) org.joda.time.DateTime
 
 ## Usage
 
-FIXME
+    > (require '[clj-time.core :as t])
+    > (def ts (t/now))
+    > ts
+      ;; => #<DateTime 2014-08-15T15:55:15.829Z>
+    > (def de (make-date-expr "s3://bucket/foo/%Y/%m/%d/bar/%H.%M/file-A"))
+    > (format-expr de ts)
+      ;; => "s3://bucket/foo/2014/08/15/bar/15.55/file-A"
+    > (parse-expr de "s3://bucket/foo/2014/08/15/bar/15.55/file-A")
+      ;; => 1408118100
+    > (quot (clj-time.coerce/to-long ts) 1000)
+      ;; => 1408118115 which is not quite equal to the return value of
+      ;;    parse-expr... loss of precision in action!
+    > (formatted-date-range (t/minus ts (t/minutes 3)) ts de)
+      ;; => ("s3://bucket/foo/2014/08/15/bar/15.52/file-A"
+      ;;     "s3://bucket/foo/2014/08/15/bar/15.53/file-A"
+      ;;     "s3://bucket/foo/2014/08/15/bar/15.54/file-A"
+      ;;     "s3://bucket/foo/2014/08/15/bar/15.55/file-A")
 
 ## License
 
