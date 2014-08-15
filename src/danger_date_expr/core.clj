@@ -77,6 +77,7 @@
    :second])
 
 (defn- get-finest-granularity [granularity-seq]
+  ;; XXX what if it's an empty seq?
   ;; XXX what if all are invalid granularities?
   ;; XXX what if some are invalid granularities?
   (let [positions (map #(.indexOf granularity-order %) granularity-seq)
