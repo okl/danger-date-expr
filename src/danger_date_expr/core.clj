@@ -238,11 +238,20 @@
 
   Formats the DateExpr across that seq of dates, and returns *that* seq.
 
-  s and f each may be a joda DateTimes, a java.lang.Long representing the number
-  of seconds since the epoch, or an EpochTime. The type of s and the type of f
-  may be different."
+  s and f each may be:
+   - a joda DateTime
+   - a java.lang.Long representing the number of seconds since the epoch
+   - an EpochTime
+   - a formatted date-expr.
+
+  The type of s and the type of f may be different."
   [s f date-expr]
-  (let [gran (compute-granularity (:string date-expr))
+  (let [->timestamp #(if (string? %)
+                       (parse-expr date-expr %)
+                       %)
+        s (->timestamp s)
+        f (->timestamp f)
+        gran (compute-granularity (:string date-expr))
         period (get granularity=>period gran)
         the-range (date-range s f period)
         formatted-range (map #(format-expr date-expr %) the-range)]

@@ -166,4 +166,13 @@
       (is (= (formatted-date-range (->seconds-since-epoch (t/minus jdt (t/days 1)))
                         (->seconds-since-epoch jdt)
                         date-expr)
-             the-result)))))
+             the-result))))
+  (testing "They even accept formatted date-exprs"
+    (let [s "s3://bucket/foo/2014/08/12/bar"
+          f "s3://bucket/foo/2014/08/14/bar"
+          date-expr (make-date-expr "s3://bucket/foo/%Y/%m/%d/bar")]
+      (is (= (formatted-date-range s f date-expr)
+             (list
+              "s3://bucket/foo/2014/08/12/bar"
+              "s3://bucket/foo/2014/08/13/bar"
+              "s3://bucket/foo/2014/08/14/bar"))))))
