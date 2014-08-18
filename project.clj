@@ -1,4 +1,4 @@
-(defproject danger-date-expr "0.1.0"
+(defproject com.onekingslane.danger/danger-date-expr "0.1.0"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
