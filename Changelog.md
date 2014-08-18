@@ -1,3 +1,7 @@
+# 0.1.2
+
+ - Rename danger-date-expr to date-expr (f40d0f0)
+
 # 0.1.1
 
 Cleanup the project.clj
