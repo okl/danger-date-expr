@@ -48,12 +48,12 @@
 
 ;; # Implementations of core protocol
 
-(def date-expr (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/stg/route-66/%H.%M/file-A"))
+(def date-expr (make-date-expr "s3://bucket/foo/%Y/%m/%d/bar/%H.%M/file-A"))
 
 (deftest format-test
   (testing "We can format a DateExpr"
     (is (= (format-expr date-expr ts)
-           "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.10/file-A"))
+           "s3://bucket/foo/2014/08/13/bar/17.10/file-A"))
     (testing "even if it starts with a date"
       (is (= (format-expr (make-date-expr "%Y/%m/foo/bar") ts)
              "2014/08/foo/bar")))
@@ -77,58 +77,58 @@
   (testing "Testing the basic range-functions"
     (let [jdt (->joda-date-time ts)]
       (is (= (formatted-date-range (t/minus jdt (t/years 2)) jdt
-                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y"))
+                                   (make-date-expr "s3://bucket/foo/%Y"))
              (list
-              "s3://okl-danger-stg/humperdink/2012"
-              "s3://okl-danger-stg/humperdink/2013"
-              "s3://okl-danger-stg/humperdink/2014")))
+              "s3://bucket/foo/2012"
+              "s3://bucket/foo/2013"
+              "s3://bucket/foo/2014")))
       (is (= (formatted-date-range (t/minus jdt (t/months 4)) jdt
-                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m"))
+                                   (make-date-expr "s3://bucket/foo/%Y/%m"))
              (list
-              "s3://okl-danger-stg/humperdink/2014/04"
-              "s3://okl-danger-stg/humperdink/2014/05"
-              "s3://okl-danger-stg/humperdink/2014/06"
-              "s3://okl-danger-stg/humperdink/2014/07"
-              "s3://okl-danger-stg/humperdink/2014/08")))
+              "s3://bucket/foo/2014/04"
+              "s3://bucket/foo/2014/05"
+              "s3://bucket/foo/2014/06"
+              "s3://bucket/foo/2014/07"
+              "s3://bucket/foo/2014/08")))
       (is (= (formatted-date-range (t/minus jdt (t/weeks 1)) jdt
-                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/"))
+                                   (make-date-expr "s3://bucket/foo/%Y/%m/%d/"))
              (list
-              "s3://okl-danger-stg/humperdink/2014/08/06/"
-              "s3://okl-danger-stg/humperdink/2014/08/07/"
-              "s3://okl-danger-stg/humperdink/2014/08/08/"
-              "s3://okl-danger-stg/humperdink/2014/08/09/"
-              "s3://okl-danger-stg/humperdink/2014/08/10/"
-              "s3://okl-danger-stg/humperdink/2014/08/11/"
-              "s3://okl-danger-stg/humperdink/2014/08/12/"
-              "s3://okl-danger-stg/humperdink/2014/08/13/")))
+              "s3://bucket/foo/2014/08/06/"
+              "s3://bucket/foo/2014/08/07/"
+              "s3://bucket/foo/2014/08/08/"
+              "s3://bucket/foo/2014/08/09/"
+              "s3://bucket/foo/2014/08/10/"
+              "s3://bucket/foo/2014/08/11/"
+              "s3://bucket/foo/2014/08/12/"
+              "s3://bucket/foo/2014/08/13/")))
       (is (= (formatted-date-range (t/minus jdt (t/hours 13)) jdt
-                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/%p"))
+                                   (make-date-expr "s3://bucket/foo/%Y/%m/%d/%p"))
              (list
-              "s3://okl-danger-stg/humperdink/2014/08/13/AM"
-              "s3://okl-danger-stg/humperdink/2014/08/13/PM")))
+              "s3://bucket/foo/2014/08/13/AM"
+              "s3://bucket/foo/2014/08/13/PM")))
       (is (= (formatted-date-range (t/minus (t/minus jdt (t/hours 3)) (t/minutes 40))
                                    jdt
-                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/stg/route-66/%H"))
+                                   (make-date-expr "s3://bucket/foo/%Y/%m/%d/bar/%H"))
              (list
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/13"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/14"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/15"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/16")))
+              "s3://bucket/foo/2014/08/13/bar/13"
+              "s3://bucket/foo/2014/08/13/bar/14"
+              "s3://bucket/foo/2014/08/13/bar/15"
+              "s3://bucket/foo/2014/08/13/bar/16")))
       (is (= (formatted-date-range (t/minus jdt (t/minutes 5)) jdt
-                                   (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/stg/route-66/%H.%M/file-A"))
+                                   (make-date-expr "s3://bucket/foo/%Y/%m/%d/bar/%H.%M/file-A"))
              (list
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.05/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.06/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.07/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.08/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.09/file-A"
-              "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66/17.10/file-A")))))
+              "s3://bucket/foo/2014/08/13/bar/17.05/file-A"
+              "s3://bucket/foo/2014/08/13/bar/17.06/file-A"
+              "s3://bucket/foo/2014/08/13/bar/17.07/file-A"
+              "s3://bucket/foo/2014/08/13/bar/17.08/file-A"
+              "s3://bucket/foo/2014/08/13/bar/17.09/file-A"
+              "s3://bucket/foo/2014/08/13/bar/17.10/file-A")))))
   (testing "They accept args in all the combinations of types"
     (let [jdt (->joda-date-time ts)
           the-result (list
-                      "s3://okl-danger-stg/humperdink/2014/08/12/stg/route-66"
-                      "s3://okl-danger-stg/humperdink/2014/08/13/stg/route-66")
-          date-expr (make-date-expr "s3://okl-danger-stg/humperdink/%Y/%m/%d/stg/route-66")]
+                      "s3://bucket/foo/2014/08/12/bar"
+                      "s3://bucket/foo/2014/08/13/bar")
+          date-expr (make-date-expr "s3://bucket/foo/%Y/%m/%d/bar")]
       (is (= (formatted-date-range (t/minus jdt (t/days 1))
                         jdt
                         date-expr)
