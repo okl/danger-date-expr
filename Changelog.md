@@ -1,3 +1,10 @@
+# 0.1.1
+
+Cleanup the project.clj
+
+ - Add url and desc to project.clj (ec22b14)
+ - Fix project groupname (7c27801)
+
 # 0.1.0
 
 Initial public version.
