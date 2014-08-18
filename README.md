@@ -1,4 +1,4 @@
-# danger-date-expr
+# date-expr
 
 A Clojure library for working with date-expressions.
 

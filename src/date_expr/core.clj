@@ -1,4 +1,4 @@
-(ns danger-date-expr.core
+(ns date-expr.core
   "Date expr central!
 
   Precisions are down to the nearest second.

@@ -1,4 +1,4 @@
-(defproject com.onekingslane.danger/danger-date-expr "0.1.1"
+(defproject com.onekingslane.danger/date-expr "0.1.1"
   :description "A Clojure library for working with date-expressions."
   :url "https://github.com/okl/danger-date-expr"
   :license {:name "Eclipse Public License"

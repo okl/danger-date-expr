@@ -1,10 +1,10 @@
-(ns danger-date-expr.core-test
-  "Tests for danger-date-expr.core"
+(ns date-expr.core-test
+  "Tests for date-expr.core"
   {:author "Matt Halverson"
    :date "Wed Aug 13 09:48:42 PDT 2014"}
   (:require [roxxi.utils.print :refer [print-expr]])
   (:require [clojure.test :refer :all])
-  (:require [danger-date-expr.core :refer :all]
+  (:require [date-expr.core :refer :all]
             [clj-time.core :as t]))
 
 (def ts 1407949842) ;; 2014-08-13 at 17:10:42.000 UTC
