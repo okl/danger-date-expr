@@ -1,3 +1,7 @@
+# 0.2.0
+
+ - date-exprs now work with timezones (059fde1)
+
 # 0.1.2
 
  - Rename danger-date-expr to date-expr (f40d0f0)
