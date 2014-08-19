@@ -2,25 +2,38 @@
 
 A Clojure library for working with date-expressions.
 
-Functionality provided:
+General functionality provided:
 
- * Given a date-expression and a timestamp, compute the formatted
-   date-expr string
- * Given a date-expression and a formatted date-expr string, compute
-   the timestamp that the date-expression represents
- * Given a date-expression, a start time, and a stop time, compute all
-   the formatted date-expr strings in between start and stop time
-   (spaced apart by the finest granularity of time-period in the date
-   expression)
+ * Given a date-expr pattern-string and an optional timezone,
+   produce a date-expr!
+ * Given a date-expr and a timestamp, compute the formatted date
+ * Given a date-expr and a formatted date, parse the formatted date
+   to back-compute the timestamp
+ * Given a date-expr, a start time, and a stop time, compute all
+   the formatted dates in between start and stop time (spaced apart by
+   the finest granularity of time-period in the date expr)
+
+Functionality around timezones:
+
+ * Given a date-expr pattern-string, determine if it has any
+   timezone conversion-specs in it
+ * Given a date-expr pattern-string (that you know has a timezone in it)
+   and a formatted date, compute the timezone of the formatted date
 
 Notes:
 
  * Precisions are down to the nearest second.
- * Formats are in UTC.
+ * Date-expr timezone defaults to UTC if unspecified
  * Accepted timestamp formats are:
     * java.lang.Long, representing seconds since the Unix epoch
     * EpochTime, defined inside this library
     * org.joda.time.DateTime
+ * Accepted timezone formats are:
+    * nil (will be interpreted as utc)
+    * org.joda.time.DateTimeZone
+    * java.util.TimeZone
+    * long form of timezone id, e.g. "America/Los_Angeles"
+    * hours and minutes offset from UTC, e.g. "-0800" or "+0530"
 
 ## Usage
 
@@ -43,6 +56,14 @@ Sample usage at a repl:
       ;;     "s3://bucket/foo/2014/08/15/bar/15.53/file-A"
       ;;     "s3://bucket/foo/2014/08/15/bar/15.54/file-A"
       ;;     "s3://bucket/foo/2014/08/15/bar/15.55/file-A")
+    > (formatted-date-range "s3://bucket/foo/2014/08/15/bar/15.52/file-A"
+                            "s3://bucket/foo/2014/08/15/bar/15.55/file-A"
+                            de)
+      ;; => ("s3://bucket/foo/2014/08/15/bar/15.52/file-A"
+      ;;     "s3://bucket/foo/2014/08/15/bar/15.53/file-A"
+      ;;     "s3://bucket/foo/2014/08/15/bar/15.54/file-A"
+      ;;     "s3://bucket/foo/2014/08/15/bar/15.55/file-A")
+      ;; same result as the other way!
 
 Allowable date-exprs are defined by the `date-conversion-specs` map in
 the source code. It's a subset of the POSIX conversion

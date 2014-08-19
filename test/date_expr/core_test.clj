@@ -5,7 +5,8 @@
   (:require [roxxi.utils.print :refer [print-expr]])
   (:require [clojure.test :refer :all])
   (:require [date-expr.core :refer :all]
-            [clj-time.core :as t]))
+            [clj-time.core :as t])
+  (:import [org.joda.time DateTimeZone]))
 
 (def ts 1407949842) ;; 2014-08-13 at 17:10:42.000 UTC
 
@@ -70,6 +71,49 @@
              1407949800))
       (is (= (format-expr date-expr (parse-expr date-expr f))
              f)))))
+
+(deftest make-date-expr-test
+  (testing "We can specify a TZ if we want"
+    (let [de (make-date-expr "" "-0800")]
+      (is (= (timezone de) (DateTimeZone/forID "-08:00")))))
+  (testing "TZ defaults to utc"
+    (let [de (make-date-expr "")]
+      (is (= (timezone de) t/utc))))
+  (testing "Malformed TZs -> exception is thrown"
+    (is (thrown? Exception (make-date-expr "s3://bucket/%H.%M%z/foo" "-080")))
+    (is (thrown? Exception (make-date-expr "s3://bucket/%H.%M%z/foo" "-08000")))))
+
+
+;; # Timezones
+
+(deftest has-tz-test
+  (is (true? (has-tz? "%z")))
+  (is (true? (has-tz? "s3://bucket/foo/%Y/%m/%d/bar/%H.%M%z/file-A")))
+  (is (false? (has-tz? "s3://bucket/foo/%Y/%m/%d/bar/%H.%M%Z/file-A")))
+  (is (false? (has-tz? "s3://bucket/foo/%Y/%m/%d/bar/%H.%M/file-A")))
+  (is (false? (has-tz? ""))))
+
+(deftest extract-timezone-test
+  (testing "We can extract timezones from formatted strings"
+    (let [s "s3://bucket/%Y/%m/%d/foo/%H.%M%z/bar"]
+      (is (= (extract-timezone s "s3://bucket/2014/08/19/foo/10.43-0700/bar")
+             (DateTimeZone/forID "-07:00")))
+      (is (= (extract-timezone s "s3://bucket/2014/08/19/foo/10.43+0110/bar")
+             (DateTimeZone/forID "+01:10")))))
+  (testing "We can get back the timezone we used to format with"
+    (let [des "s3://bucket/%H.%M%z/foo"
+          de-1 (make-date-expr des)
+          de-2 (make-date-expr des nil)
+          de-3 (make-date-expr des "America/Los_Angeles")
+          de-4 (make-date-expr des "-0801")
+          de-5 (make-date-expr des "+0802")
+          de-6 (make-date-expr des (java.util.TimeZone/getTimeZone "PST"))]
+      (is (= (extract-timezone des (format-expr de-1 ts)) t/utc))
+      (is (= (extract-timezone des (format-expr de-2 ts)) t/utc))
+      (is (= (extract-timezone des (format-expr de-3 ts)) (DateTimeZone/forID "-07:00")))
+      (is (= (extract-timezone des (format-expr de-4 ts)) (DateTimeZone/forID "-08:01")))
+      (is (= (extract-timezone des (format-expr de-5 ts)) (DateTimeZone/forID "+08:02")))
+      (is (= (extract-timezone des (format-expr de-6 ts)) (DateTimeZone/forID "-07:00"))))))
 
 ;; # formatted-date-range
 
@@ -168,11 +212,26 @@
                         date-expr)
              the-result))))
   (testing "They even accept formatted date-exprs"
-    (let [s "s3://bucket/foo/2014/08/12/bar"
-          f "s3://bucket/foo/2014/08/14/bar"
+    (let [s "s3://bucket/foo/2014/07/30/bar"
+          f "s3://bucket/foo/2014/08/01/bar"
           date-expr (make-date-expr "s3://bucket/foo/%Y/%m/%d/bar")]
       (is (= (formatted-date-range s f date-expr)
              (list
-              "s3://bucket/foo/2014/08/12/bar"
-              "s3://bucket/foo/2014/08/13/bar"
-              "s3://bucket/foo/2014/08/14/bar"))))))
+              "s3://bucket/foo/2014/07/30/bar"
+              "s3://bucket/foo/2014/07/31/bar"
+              "s3://bucket/foo/2014/08/01/bar"))))))
+
+(deftest formatted-date-range-may-use-different-timezones
+  (testing (str "s and f and date-expr may all be in different timezones, "
+                "but the formatted date range will be in the tz of the "
+                "date-expr")
+    (let [s "s3://bucket/foo/2014/08/01/bar/08.03-0800"
+          f "s3://bucket/foo/2014/08/01/bar/10.06-0600"
+          date-expr (make-date-expr "s3://bucket/foo/%Y/%m/%d/bar/%H.%M%z"
+                                    t/utc)]
+      (is (= (formatted-date-range s f date-expr)
+             (list
+              "s3://bucket/foo/2014/08/01/bar/16.03+0000"
+              "s3://bucket/foo/2014/08/01/bar/16.04+0000"
+              "s3://bucket/foo/2014/08/01/bar/16.05+0000"
+              "s3://bucket/foo/2014/08/01/bar/16.06+0000"))))))
