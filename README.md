@@ -8,7 +8,7 @@ General functionality provided:
    produce a date-expr!
  * Given a date-expr and a timestamp, compute the formatted date
  * Given a date-expr and a formatted date, parse the formatted date
-   to back-compute the timestamp
+   to back-compute the corresponding timestamp
  * Given a date-expr, a start time, and a stop time, compute all
    the formatted dates in between start and stop time (spaced apart by
    the finest granularity of time-period in the date expr)
@@ -17,12 +17,12 @@ Functionality around timezones:
 
  * Given a date-expr pattern-string, determine if it has any
    timezone conversion-specs in it
- * Given a date-expr pattern-string (that you know has a timezone in it)
+ * Given a date-expr pattern-string (that you are certain has a timezone in it)
    and a formatted date, compute the timezone of the formatted date
 
 Notes:
 
- * Precisions are down to the nearest second.
+ * Precisions are down to the second.
  * Date-expr timezone defaults to UTC if unspecified
  * Accepted timestamp formats are:
     * java.lang.Long, representing seconds since the Unix epoch
@@ -34,6 +34,19 @@ Notes:
     * java.util.TimeZone
     * long form of timezone id, e.g. "America/Los_Angeles"
     * hours and minutes offset from UTC, e.g. "-0800" or "+0530"
+
+## Terminology
+
+ * **date-expr or date-expression**: the Clojure type representing a
+   date expression
+ * **date-expr pattern-string**: string that describes the format of a
+   date-expr... e.g. "s3://bucket/%Y-%m-%d/foo"
+ * **formatted date**: what you get when you format a date-expr using
+   a particular timestamp
+ * **conversion-spec or conversion specification**: the "active"
+   portions of a date-expr pattern-string, which encode for time and
+   get replaced when formatted. e.g. %Y is the conversion-spec for
+   "four-digit year"
 
 ## Usage
 
