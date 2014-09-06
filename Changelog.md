@@ -1,3 +1,8 @@
+# 0.3.0
+
+ - Add docs on 'coarser' and 'dateless-prefix' (2fcd94b)
+ - Add 'coarser' and 'dateless-prefix' fns (002c49c)
+
 # 0.2.0
 
  - date-exprs now work with timezones (059fde1)
