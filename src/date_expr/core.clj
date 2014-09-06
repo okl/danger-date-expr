@@ -133,8 +133,8 @@
    :day (t/days 1)
    ;; A change-of-meridian is 11, 12, or 13 hours depending, if you allow
    ;; switching timezones to/from daylight savings halfway through. But if
-   ;; you're only formatting things in UTC, like this module is, then
-   ;; a change-of-meridian is always a period of 12 hours. Yay!
+   ;; you're only formatting a date-range in one timezone, like this module is,
+   ;; then a change-of-meridian is always a period of 12 hours. Yay!
    :meridian (t/hours 12)
    :hour (t/hours 1)
    :minute (t/minutes 1)
@@ -146,10 +146,40 @@
     (re-seq pattern string)))
 
 (defn- compute-granularity [string]
-  (let [conv-specs (extract-date-parts string)
-        grans (map #(get-in date-conversion-specs [% :granularity]) conv-specs)]
-    (get-finest-granularity grans)))
+  (when-let [conv-specs (extract-date-parts string)]
+    (let [grans (map #(get-in date-conversion-specs [% :granularity]) conv-specs)]
+      (get-finest-granularity grans))))
 
+(defn coarser
+  "This computes the finest granularity of the string, then truncates
+  the string up to that point.
+
+  If the input string is void of any granularity-ful conv-specs, returns nil.
+
+  If the input string has multiple occurrences of the finest granularity,
+    truncates to the first occurrence of that granularity."
+  [string]
+  (when-let [g (compute-granularity string)]
+    (let [matching-specs (filter #(= g (:granularity (val %))) date-conversion-specs)
+          matching-strs (map first matching-specs)
+          all-indices (map #(.indexOf string %) matching-strs)
+          matching-indices (filter (comp not neg?) all-indices)
+          first-match (apply min matching-indices)]
+      (subs string 0 first-match))))
+
+(defn- dateless? [string]
+  (empty? (extract-date-parts string)))
+
+(defn dateless-prefix
+  "Given a date-expr pattern-str, returns everything in the string before
+  the first conv-spec"
+  [string]
+  (if (dateless? string)
+    string
+    (let [conv-specs (extract-date-parts string)
+          positions (map #(.indexOf string %) conv-specs)
+          min-pos (apply min positions)]
+      (subs string 0 min-pos))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; # Core protocol

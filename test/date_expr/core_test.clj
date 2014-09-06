@@ -47,6 +47,68 @@
           (is (= et (->epoch-time (->epoch-time et))))
           (is (= ts (->seconds-since-epoch (->epoch-time et)))))))))
 
+;; # Coarser
+
+(deftest coarser-test
+  (testing "coarser works on"
+    (testing "dateless strings"
+      (is (nil? (coarser "asdf"))))
+    (testing "empty string"
+      (is (nil? (coarser ""))))
+    (testing "strings with dates at the start"
+      (is (= (coarser "%Y/%m/foo/bar")
+             "%Y/"))
+      (is (= (coarser "%Y/foo")
+             "")))
+    (testing "strings with dates not at the start"
+      (is (= (coarser "s3://bucket/%Y/%m/foo")
+             "s3://bucket/%Y/"))
+      (is (= (coarser "s3://bucket/%Y")
+             "s3://bucket/"))
+      (is (= (coarser "s3://bucket/%Y/%m")
+             "s3://bucket/%Y/"))
+      (is (= (coarser "s3://bucket/%Y/%p")
+             "s3://bucket/%Y/"))
+      (is (= (coarser "s3://bucket/%Y/%m/%z")
+             "s3://bucket/%Y/"))
+      (is (= (coarser "s3://bucket/%Y/%z")
+             "s3://bucket/")))
+    (testing "strings with dates that aren't in granularity order"
+      (is (= (coarser "s3://bucket/%d/%m/%Y/foo")
+             "s3://bucket/"))
+      (is (= (coarser "%H/%d/%m/%Y/foo")
+             ""))
+      (is (= (coarser "%d/%H/%m/%Y/foo")
+             "%d/")))))
+
+;; # Dateless-prefix
+
+(deftest dateless-prefix-text
+  (testing "dateless-prefix works on"
+    (testing "dateless strings"
+      (is (= (dateless-prefix "asdf")
+             "asdf")))
+    (testing "empty string"
+      (is (= (dateless-prefix "")
+             "")))
+    (testing "strings with dates at the start"
+      (is (= (dateless-prefix "%Y/%m/foo/bar")
+             ""))
+      (is (= (dateless-prefix "%Y/foo")
+             "")))
+    (testing "strings with dates not at the start"
+      (is (= (dateless-prefix "s3://bucket/%Y/%m/foo")
+             "s3://bucket/"))
+      (is (= (dateless-prefix "s3://bucket/%Y/%m")
+             "s3://bucket/"))
+      (is (= (dateless-prefix "s3://bucket/%Y/%p")
+             "s3://bucket/"))
+      (is (= (dateless-prefix "s3://bucket/%Y/%z")
+             "s3://bucket/")))
+    (testing "strings with dates that aren't in granularity order"
+      (is (= (dateless-prefix "s3://bucket/%d/%m/%Y/foo")
+             "s3://bucket/")))))
+
 ;; # Implementations of core protocol
 
 (def date-expr (make-date-expr "s3://bucket/foo/%Y/%m/%d/bar/%H.%M/file-A"))
