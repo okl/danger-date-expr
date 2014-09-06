@@ -20,6 +20,14 @@ Functionality around timezones:
  * Given a date-expr pattern-string (that you are certain has a timezone in it)
    and a formatted date, compute the timezone of the formatted date
 
+Functionality around shortening date-expr pattern-strings:
+
+ * Given a date-expr pattern-string, make it "coarser" by one level of
+   granularity, by removing everything before the finest-grained
+   conversion-spec.
+ * Given a date-expr pattern-string, make it "dateless" by removing
+   everything before the first conversion-spec.
+
 Notes:
 
  * Precisions are down to the second.
